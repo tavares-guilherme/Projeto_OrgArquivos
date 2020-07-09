@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "binarioNaTela.h"
+#include "arquivoIndice.h"
 
 #define DEBUG 1
 
@@ -602,6 +603,8 @@ int buscaCombinada(char* nomeArquivo, int remocao)
     int auxiliar;               // Variável auxiliar que servirá para verificar se o registro foi removido lógicamente.
     char status;
     int  numRegistrosRemovidos;
+    int  numRegistrosInseridos;
+    int idAchado = 0;
 
     // Recebe os Parametros do usuário.
     if(processarParametros(idBuscaCampos, &parametrosDeBusca)) 
@@ -627,6 +630,9 @@ int buscaCombinada(char* nomeArquivo, int remocao)
         status = '0';
         fwrite(&status, sizeof(char), 1, binario);
 
+        fseek(binario, 5, SEEK_SET);
+        fread(&numRegistrosInseridos, sizeof(int), 1, binario);
+        
         fseek(binario, 9, SEEK_SET);
         fread(&numRegistrosRemovidos, sizeof(int), 1, binario);
     }
@@ -642,6 +648,7 @@ int buscaCombinada(char* nomeArquivo, int remocao)
     while(fread(&auxiliar, sizeof(int), 1, binario) != 0)
     {
         verif = 1;
+        idAchado = 0;
         definirRegistroVazio(&registroLido);
 
         // Verifica se o registro foi removido lógicamente
@@ -671,46 +678,54 @@ int buscaCombinada(char* nomeArquivo, int remocao)
             if(idBuscaCampos[2]) // Verifica se o campo conta para a busca 
             {
                 if(registroLido.idNascimento != parametrosDeBusca.idNascimento) // Verifica se o conteúdo dos campos é igual.
+                {
                     verif = 0;
+                    idAchado = 1;
+                }
             }
-            // Campo idadeMae
-            fread(&registroLido.idadeMae, sizeof(int), 1, binario);
-            if(idBuscaCampos[3]) // Verifica se o campo conta para a busca
+            if(!idAchado)
             {
-                if(registroLido.idadeMae != parametrosDeBusca.idadeMae) // Verifica se o conteúdo dos campos é igual.
-                    verif = 0;
-            }
-            // Campo dataNascimento
-            fread(registroLido.dataNascimento, sizeof(char), 10, binario);
-            registroLido.dataNascimento[10] = '\0';
-            if(idBuscaCampos[4]) // Verifica se o campo conta para a busca
-            {
-                if(strcmp(registroLido.dataNascimento, parametrosDeBusca.dataNascimento) != 0) // Verifica se o conteúdo dos campos é igual.
-                    verif = 0;
-            }
-            // Campo sexoBebe
-            fread(&registroLido.sexoBebe, sizeof(char), 1, binario);
-            if(idBuscaCampos[5]) // Verifica se o campo conta para a busca
-            {
-                if(registroLido.sexoBebe != parametrosDeBusca.sexoBebe) // Verifica se o conteúdo dos campos é igual.
-                    verif = 0;
-            }
-            // Campo estadoMae
-            fread(registroLido.estadoMae, sizeof(char), 2, binario);
-            registroLido.estadoMae[2] = '\0';
-            if(idBuscaCampos[6]) // Verifica se o campo conta para a busca
-            {
-                if(strcmp(registroLido.estadoMae, parametrosDeBusca.estadoMae) != 0) // Verifica se o conteúdo dos campos é igual.
-                    verif = 0;
-            }
-            // Campo estadoBebe
-            fread(registroLido.estadoBebe, sizeof(char), 2, binario);
-            registroLido.estadoBebe[2] = '\0';
-            if(idBuscaCampos[7]) // Verifica se o campo conta para a busca
-            {
-                if(strcmp(registroLido.estadoBebe, parametrosDeBusca.estadoBebe) != 0) // Verifica se o conteúdo dos campos é igual.
-                    verif = 0;
-            }
+                // Campo idadeMae
+                fread(&registroLido.idadeMae, sizeof(int), 1, binario);
+                if(idBuscaCampos[3]) // Verifica se o campo conta para a busca
+                {
+                    if(registroLido.idadeMae != parametrosDeBusca.idadeMae) // Verifica se o conteúdo dos campos é igual.
+                        verif = 0;
+                }
+                // Campo dataNascimento
+                fread(registroLido.dataNascimento, sizeof(char), 10, binario);
+                registroLido.dataNascimento[10] = '\0';
+                if(idBuscaCampos[4]) // Verifica se o campo conta para a busca
+                {
+                    if(strcmp(registroLido.dataNascimento, parametrosDeBusca.dataNascimento) != 0) // Verifica se o conteúdo dos campos é igual.
+                        verif = 0;
+                }
+                // Campo sexoBebe
+                fread(&registroLido.sexoBebe, sizeof(char), 1, binario);
+                if(idBuscaCampos[5]) // Verifica se o campo conta para a busca
+                {
+                    if(registroLido.sexoBebe != parametrosDeBusca.sexoBebe) // Verifica se o conteúdo dos campos é igual.
+                        verif = 0;
+                }
+                // Campo estadoMae
+                fread(registroLido.estadoMae, sizeof(char), 2, binario);
+                registroLido.estadoMae[2] = '\0';
+                if(idBuscaCampos[6]) // Verifica se o campo conta para a busca
+                {
+                    if(strcmp(registroLido.estadoMae, parametrosDeBusca.estadoMae) != 0) // Verifica se o conteúdo dos campos é igual.
+                        verif = 0;
+                }
+                // Campo estadoBebe
+                fread(registroLido.estadoBebe, sizeof(char), 2, binario);
+                registroLido.estadoBebe[2] = '\0';
+                if(idBuscaCampos[7]) // Verifica se o campo conta para a busca
+                {
+                    if(strcmp(registroLido.estadoBebe, parametrosDeBusca.estadoBebe) != 0) // Verifica se o conteúdo dos campos é igual.
+                        verif = 0;
+                }
+            }else // Pula para o final do arquivo.
+                fseek(binario, 19, SEEK_CUR);
+
         }else // Trata os casos de registros removidos logicamente.
         {
             fseek(binario, 124, SEEK_CUR);
@@ -727,6 +742,7 @@ int buscaCombinada(char* nomeArquivo, int remocao)
                 fseek(binario, 124, SEEK_CUR);
 
                 numRegistrosRemovidos++;
+                numRegistrosInseridos--;
                 registroInexistente = 0;
             }
             else
@@ -735,7 +751,7 @@ int buscaCombinada(char* nomeArquivo, int remocao)
                 imprimeRegistro(registroLido);
                 registroInexistente = 0;
             }
-        }
+       }
     }
 
     if(remocao) // Marca o arquivo como consistente após a remoção lógica e atualiza o número de Registros removidos.
@@ -745,9 +761,12 @@ int buscaCombinada(char* nomeArquivo, int remocao)
         fseek(binario, 0, SEEK_SET);
         fwrite(&status, sizeof(char), 1, binario);
 
+        // Numero de registros inseridos:
+        fseek(binario, 5, SEEK_SET);
+        fwrite(&numRegistrosInseridos, sizeof(int), 1, binario);
         // Numero de registros removidos: 
         fseek(binario, 9, SEEK_SET);
-        //fwrite(&numRegistrosRemovidos, sizeof(int), 1, binario);
+        fwrite(&numRegistrosRemovidos, sizeof(int), 1, binario);
         fclose(binario);
         if(registroInexistente) return 1;
         else return 0;
@@ -768,7 +787,7 @@ int buscaCombinada(char* nomeArquivo, int remocao)
 
 // ================================================= FUNCIONALIDADE 4 ==============================================================================
 
-void buscaRRN(char* nomeArquivo, int RRN)
+int buscaRRN(char* nomeArquivo, int RRN)
 {
     /*
      *      Função que abre um arquivo binário, dado seu nome e, imprime o registro correspondente ao RRN fornecido.
@@ -780,7 +799,7 @@ void buscaRRN(char* nomeArquivo, int RRN)
     int regStatus;
     if(nomeArquivo == NULL || !(binario = fopen(nomeArquivo, "rb"))) {
         printf("Falha no processamento do arquivo.\n");
-		return;
+		return 0;
 	}
 
     // Vai para o Registro com RRN fornecido, pulando o cabeçalho
@@ -798,6 +817,7 @@ void buscaRRN(char* nomeArquivo, int RRN)
             printf("Registro Inexistente.\n");
     }    
     fclose(binario);
+    return 1;
 }
 
 // ================================================= FUNCIONALIDADE 5 ==============================================================================
@@ -810,7 +830,7 @@ void remocaoPorParametros(char* nomeArquivo)
      */
 
     int numeroDeRemocoes; // Variável que armazena o número de remoções a serem realizadas.
-    int verif = 1;        // Recebe 1 se nenhum registro foi imprimido, caso contrário, recebe 0.
+    int verif = 1;
     FILE* binario;
 
     // Verifica se o arquivo fornecido é inválido.    
@@ -818,6 +838,9 @@ void remocaoPorParametros(char* nomeArquivo)
         printf("Falha no processamento do arquivo.\n");
 		return;
 	}
+
+    //TO - DO: Definir um valor específico para erros durante a busca.
+    // FUNC 3 - Impressão tá errada.
 
     scanf("%d", &numeroDeRemocoes);
     for(int i = 0; i < numeroDeRemocoes; i++)
@@ -829,29 +852,38 @@ void remocaoPorParametros(char* nomeArquivo)
     return;
 }
 
-// ================================================= FUNCIONALIDADE 6 ==============================================================================
+// ================================================= FUNCIONALIDADE 6 / 10 ==============================================================================
 
-void insercaoAdicional(char* nomeArquivo)
+void insercaoAdicional(char* nomeArquivo, int indice)
 {
     /*
      *      Função que recebe do usuário um valor n de registros, e os insere no final do arquivo.
      *      Além disso, a função altera os Campos de registrosInseridos e de proximoRRN do cabeçalho.
+     * 
+     *      char* nomeArquivo - Armazena o nome do arquivo original a ser aberto.
+     *      int indice        - Armazena se deverá ser feita a inserção em um arquivo de índice, ou não.
      */
 
-    FILE*    binario;
-    REGISTRO novo;
+    FILE*    binario;       // Arquivo binário
+    REGISTRO novo;          // Registro a ser inserido.
+    FILE*    arquivoIndice; // Arquivo de índice.
+    char nomeIndice[62];    // Nome do arquivo de índice.
 
+    /* Verifica se o arquivo foi aberto corretamente.*/
     if(nomeArquivo == NULL || !(binario = fopen(nomeArquivo, "rb+"))) {
         printf("Falha no processamento do arquivo.\n");
 		return;
 	}
 
-    int  numInsercoes;       // Variavel que armazena o número de inserções a serem realizadas.
-    int  cabecalhoInsercoes; // Armazena o numero de inserções, armazenadas no cabeçalho. Será utilizado para atualizar após a inserção.
-    int  cabecalhoRRN;       // Armazena o numero de inserções, armazenadas no cabeçalho. Será utilizado para atualizar após a inserção.
-    char auxiliar[11];       // Variável auxiliar que servirá para tratar entradas nulas
-    char status;
-
+    int  numInsercoes;          // Variavel que armazena o número de inserções a serem realizadas.
+    int  cabecalhoInsercoes;    // Armazena o numero de inserções, armazenadas no cabeçalho. Será utilizado para atualizar após a inserção.
+    int  cabecalhoRRN;          // Armazena o RRN em que deve ser inserido o próximo registro.
+    char auxiliar[11];          // Variável auxiliar que servirá para tratar entradas nulas
+    char status;                // Armazena o status do arquivo original.
+    char statusIndice;          // Armazena o status do arquivo de índice.
+    int  numRegistrosIndice;    // Armazena o número de inserções no arquivo de índice, serve para conferir se o índice realmente é referente ao arquivo original.
+    int  indiceRaiz;            // Armazena o RRN do nó raiz do índice.
+    /* Lê o status do arquivo original. */
     fseek(binario, 0, SEEK_SET);
     fread(&status, sizeof(char), 1, binario);
 
@@ -861,7 +893,26 @@ void insercaoAdicional(char* nomeArquivo)
         fclose(binario);
         return;
     }else
-    {
+    {   
+        /* Recebe e verifica se o índice foi aberto corretamente. */
+        if(indice)
+        {
+            scanf("%s", nomeIndice);
+            if(nomeIndice == NULL || !(arquivoIndice = fopen(nomeIndice, "rb+"))) {
+                fclose(binario);
+                printf("Falha no processamento do arquivo.\n");
+                return;
+            }
+            fseek(arquivoIndice, 0, SEEK_SET);
+            fread(&statusIndice, sizeof(char), 1, arquivoIndice);
+            if(statusIndice == '0')
+            {
+                printf("Falha no processamento do arquivo.\n");
+                fclose(binario);fclose(arquivoIndice);
+                return;
+            }
+        }
+        /* Recebe as informações relevantes do cabeçalho do arquivo original. */
         status = '0';
         fseek(binario, 0, SEEK_SET);
         fwrite(&status, sizeof(char), 1, binario);
@@ -870,12 +921,29 @@ void insercaoAdicional(char* nomeArquivo)
         fseek(binario, 5, SEEK_SET);
         fread(&cabecalhoInsercoes, sizeof(int), 1, binario);
         scanf("%d", &numInsercoes);
-
+        /* Recebe, e confere, as informações do cabeçalho do arquivo de índice. */
+        if(indice)
+        {
+            statusIndice = '0';
+            fseek(arquivoIndice, 0, SEEK_SET);
+            fwrite(&statusIndice, sizeof(char), 1, arquivoIndice);
+            fseek(arquivoIndice, 1, SEEK_SET);
+            fread(&indiceRaiz, sizeof(int), 1, arquivoIndice);
+            fseek(arquivoIndice, 13, SEEK_SET);
+            fread(&numRegistrosIndice, sizeof(int), 1, arquivoIndice);
+            /* Condição em que os arquivos não são correspondentes */
+            if(numRegistrosIndice != numInsercoes)
+            {
+                printf("Falha no processamento do arquivo.\n");
+                fclose(binario); fclose(arquivoIndice);
+                return;
+            }
+        }
         for(int i = 0; i < numInsercoes; i++)
         {
-            // O Trecho a seguir servirá para receber os dados do Registro do usuário.
-            
-            // Campo cidadeMae
+            /* O Trecho a seguir servirá para receber os dados do Registro do usuário. */
+
+            /* Campo cidadeMae */
             scan_quote_string(novo.cidadeMae);
             if(strcmp("", novo.cidadeMae) == 0) // Trata Casos nulos
             {
@@ -886,7 +954,7 @@ void insercaoAdicional(char* nomeArquivo)
                 novo.tamanho_cidadeMae = strlen(novo.cidadeMae);
                 novo.cidadeMae[novo.tamanho_cidadeMae] = '\0';
             }
-            // Campo cidadeBebe
+            /* Campo cidadeBebe */
             scan_quote_string(novo.cidadeBebe);
             if(strcmp("", novo.cidadeBebe) == 0) // Trata Casos nulos
             {
@@ -897,37 +965,37 @@ void insercaoAdicional(char* nomeArquivo)
                 novo.tamanho_cidadeBebe = strlen(novo.cidadeBebe);
                 novo.cidadeBebe[novo.tamanho_cidadeBebe] = '\0';
             }
-            // Campo idNascimento  
+            /* Campo idNascimento */  
             scanf("%s", auxiliar);
             if(auxiliar[0] == 'N' || auxiliar[0] == 'n')
                 novo.idNascimento = -1; // NULO
             else novo.idNascimento = atoi(auxiliar);  // Valor válido
-            // Campo idadeMae
+            /* Campo idadeMae */
             scanf("%s", auxiliar);
             if(auxiliar[0] == 'N' || auxiliar[0] == 'n')
                 novo.idadeMae = -1; // NULO
             else novo.idadeMae = atoi(auxiliar); // Valor Válido
-            // Campo dataNascimento
+            /* Campo dataNascimento */
             scan_quote_string(novo.dataNascimento);
             if(strcmp("", novo.dataNascimento) == 0) // Trata Casos nulos
             {
                 novo.dataNascimento[0] = '\0';
                 for(int i = 1; i < 10; i++) novo.dataNascimento[i] = '$';
             }else novo.dataNascimento[10] = '\0';
-            // Campo sexoBebe
+            /* Campo sexoBebe */
             scan_quote_string(&novo.sexoBebe);
             if(novo.sexoBebe == '\0') // Trata Casos nulos
             {
                 novo.sexoBebe = '0';
             }
-            // Campo estadoMae
+            /* Campo estadoMae */
             scan_quote_string(novo.estadoMae);
             if(strcmp("", novo.estadoMae) == 0) // Trata Casos nulos
             {
                 novo.estadoMae[0] = '\0';
                 novo.estadoMae[1] = '$'; novo.estadoMae[2] = '$';
             }else novo.estadoMae[2] = '\0';
-            // Campo estadoBebe
+            /* Campo estadoBebe */
             scan_quote_string(novo.estadoBebe);
             if(strcmp("", novo.estadoBebe) == 0) // Trata Casos nulos
             {
@@ -935,11 +1003,12 @@ void insercaoAdicional(char* nomeArquivo)
                 novo.estadoBebe[1] = '$'; novo.estadoBebe[2] = '$';
             }else novo.estadoBebe[2] = '\0';
 
-            // Insereno final do arquivo e faz as iteraçoes dos campos do cabeçalho
+            /* Insere no final do arquivo e faz as iteraçoes dos campos do cabeçalho. */
             fseek(binario, 0, SEEK_END);
             inserirRegistro(&novo, binario);
             cabecalhoRRN++;
             cabecalhoInsercoes++;
+            /* Realiza a inserção e as iterações referentes ao arquivo de índice. */
         }
 
         // O Trecho abaixo atualizará o registro de cabeçalho
@@ -972,8 +1041,8 @@ void registroAtualizar(char* nomeArquivo)
     REGISTRO mudancas; // Armazenará os novos Campos, que deverão ser inseridos no RRN fornecido.
 
     int idBuscaCampos[8]; // Vetor que armazenará, quais campos deverão ser atualizados. 1- Caso o campo deva ser atualizado, 0 - Caso Contrário
-    int RRN;              // Variável que armazena o RRN do registro em que as atualizações serão atualizadas
     int cabecalhoAtualizacoes; // Variável que armazena valor, do cabeçalho, de registros atualizados, servirá para atualizar o cabeçalho no final da funçao.
+    int RRN;              // Variável que armazena o RRN do registro em que as atualizações serão atualizadas
     int numAtualizacoes; // Variável que armazena o número de atualizaçoes que serão feitas.
     int cabecalhoRRN;    // Armazenará o valor "rrnProximoRegistro" do cabeçalho.
     char* cidadeBebe;     // String que armazenará o valor do campo "ciadadeBebe" para impedir conflitos neste campo ao atualizar o campo "cidadeMae".
@@ -1102,6 +1171,183 @@ void registroAtualizar(char* nomeArquivo)
     binarioNaTela(nomeArquivo);
 }
 
+// ================================================= FUNCIONALIDADE 8 ==============================================================================
+
+void criaArquivoIndice(char* nomeArquivoOriginal, char* nomeArquivoIndice)
+{
+    /*
+     *      Esta função criará um arquivo de Índice, definindo seu cabeçalho e seu nó raiz vazio e percorrerá o arquivo original,
+     *  passando a referência do RRN, e do campo idNascimento, para que sejam feitas inserções através da biblioteca "arquivoIndice.h"
+     */
+
+    FILE* arquivoOrignal;
+    FILE* arquivoIndice;
+    INDICE_REGISTRO reg;
+    INDICE_CABECALHO cabecalho; // Struct que armazenará o cabeçalho do arquivo.
+    char lixo[55];              // Variável para inserir o lixo no cabeçalho.
+    int auxiliar;               // Variável para verificar se o registro foi lógicamente removido, ou não.
+    REGISTRO registroLido;      // Struct auxiliar para percorrer o arquivo original e armazenar cada registro.
+    char status;                // Variável para armazenar o status do arquivo original.
+    int RRN;                    // Variável para armazenar o RRN do registro lido.
+    int idNascimento;           // Variável para armazenar o campo idNascimento do registro lido. 
+    int valorRetorno;           // Variável para armazenar o valor de retorno da função de inserção no arquivo de índice.
+    int chavePromovida;
+    int RRNpromovido;
+    int filhoDireitaPromovido;
+    int filhoEsquerdaPromovido;
+
+    if(nomeArquivoOriginal == NULL || !(arquivoOrignal = fopen(nomeArquivoOriginal, "rb"))) {
+        printf("Falha no processamento do arquivo.\n");
+		return;
+	}
+
+    if(nomeArquivoIndice == NULL || !(arquivoIndice = fopen(nomeArquivoIndice, "wb+"))) {
+        printf("Falha no processamento do arquivo.\n");
+        return;
+    }
+    RRN = 1;
+
+    fseek(arquivoOrignal, 0, SEEK_SET);
+    fread(&status, sizeof(char), 1, arquivoOrignal);
+
+    if(status == '0')
+    {
+        fclose(arquivoIndice);
+        fclose(arquivoOrignal);
+        printf("Falha no processamento do arquivo.\n");
+        return;
+    }
+    // Inicializa o cabeçalho do arquivo de índice:
+    cabecalho.status = '1';
+    cabecalho.noRaiz = -1;
+    cabecalho.nroNiveis = 0;
+    cabecalho.proxRRN = 0;
+    cabecalho.nroChaves = 0;
+    for(int i = 0; i < 55; i++) lixo[i] = '$';
+    // Insere o cabeçalho no arquivo de Índice:
+    fseek(arquivoIndice, 0, SEEK_SET);
+    fwrite(&status, sizeof(char), 1, arquivoIndice);
+    fseek(arquivoIndice, 1, SEEK_SET);
+    fwrite(&(cabecalho.noRaiz), sizeof(int), 1, arquivoIndice);
+    fseek(arquivoIndice, 5, SEEK_SET);
+    fwrite(&(cabecalho.nroNiveis), sizeof(int), 1, arquivoIndice);
+    fseek(arquivoIndice, 9, SEEK_SET);
+    fwrite(&(cabecalho.proxRRN), sizeof(int), 1, arquivoIndice);
+    fseek(arquivoIndice, 13, SEEK_SET);
+    fwrite(&(cabecalho.nroChaves), sizeof(int) , 1, arquivoIndice);
+    fseek(arquivoIndice, 17, SEEK_SET);
+    fwrite(lixo, sizeof(char), 55, arquivoIndice);
+
+    fseek(arquivoOrignal, 128, SEEK_SET);
+    // Loop para percorrer o arquivo original.
+    while(fread(&auxiliar, sizeof(int), 1, arquivoOrignal) != 0)
+    {
+        if(auxiliar > -1) // Garante que so serão checados registros que não foram removidos.
+        {
+            // Lê o campo ID nascimento.
+            fseek(arquivoOrignal, 105 + 128*RRN, SEEK_SET);
+            fread(&idNascimento, sizeof(int), 1, arquivoOrignal);
+            fseek(arquivoOrignal, 23, SEEK_CUR);
+            // Insere no arquivo de índice.
+            valorRetorno = insercaoArquivoIndice(arquivoIndice, cabecalho.noRaiz, idNascimento, RRN-1, &chavePromovida, &RRNpromovido, &filhoDireitaPromovido, &filhoEsquerdaPromovido, &cabecalho, 0);          
+            if(valorRetorno == 1) // Quando a função de inserção retorna uma promoção, significa que devemos Criar um novo nó raiz:
+            {
+                if(cabecalho.noRaiz == -1) // Neste caso, estaremos inserindo a primeira página da árvore.
+                    cabecalho.nroChaves = 1; // Definimos o nroChaves como 1, pois a função abaixo não trata deste caso.
+
+                criacaoNoRaiz(arquivoIndice, chavePromovida, RRNpromovido, filhoDireitaPromovido, filhoEsquerdaPromovido, &cabecalho);
+            }           
+        }else fseek(arquivoOrignal, 124, SEEK_CUR); // Pula para o próximo registro.     
+        RRN++;
+        printf("%c - noRaiz: %d, nroNiveis: %d, proxRRN - %d, nroChaves - %d.\n", cabecalho.status, cabecalho.noRaiz, cabecalho.nroNiveis, cabecalho.proxRRN, cabecalho.nroChaves);
+    }
+    
+    // Atualiza o cabeçalho após as inserções: 
+    cabecalho.status = '1';
+    fseek(arquivoIndice, 0, SEEK_SET);
+    fwrite(&status, sizeof(char), 1, arquivoIndice);
+    fseek(arquivoIndice, 1, SEEK_SET);
+    fwrite(&(cabecalho.noRaiz), sizeof(int), 1, arquivoIndice);
+    fseek(arquivoIndice, 5, SEEK_SET);
+    fwrite(&(cabecalho.nroNiveis), sizeof(int), 1, arquivoIndice);
+    fseek(arquivoIndice, 9, SEEK_SET);
+    fwrite(&(cabecalho.proxRRN), sizeof(int), 1, arquivoIndice);
+    fseek(arquivoIndice, 13, SEEK_SET);
+    fwrite(&(cabecalho.nroChaves), sizeof(int) , 1, arquivoIndice);
+
+    fclose(arquivoOrignal);fclose(arquivoIndice);
+    binarioNaTela(nomeArquivoIndice);
+}
+
+
+// ================================================= FUNCIONALIDADE 9 ==============================================================================
+
+void buscaIndice(char* nomeArquivoOriginal, char* nomeArquivoIndice)
+{
+    /*
+     *      Função para tratar os arquivos e as saidas, além de chamar a função de busca do arquivo de índice.
+     */
+
+    FILE* arquivoOriginal;  // Armazena o arquivo binário original.
+    FILE* arquivoIndice;    // Armazena o arquivo de índice.
+    int idNascimento;       // Armazena o campo idNascimento que será usado como chave de busca.
+    int rrnAchado;          // Armazena o RRN do registro em que o campo que contém "idNascimento".
+    int numIteracoes = 0;   // Contador que armazena o número de iterações da função de busca.
+    int numregistros;       // Variável para armazenar o valor, contido no cabeçalho, do número de registros do arquivo original.
+    INDICE_CABECALHO cabecalhoIndice; // Armazena o cabeçalho do arquivo de índice.
+
+    /* Verifica se os arquivos foram passados corretamente */
+    if(nomeArquivoOriginal == NULL || !(arquivoOriginal = fopen(nomeArquivoOriginal, "rb"))) {
+        printf("Falha no processamento do arquivo.\n");
+        fclose(arquivoOriginal);
+        return;
+    }
+    if(nomeArquivoIndice == NULL || !(arquivoIndice = fopen(nomeArquivoIndice, "rb"))) {
+        printf("Falha no processamento do arquivo.\n");
+        return;
+    }
+
+    /* Recebe o id a ser buscado.*/
+    scanf("%d", &idNascimento);
+
+    /*Lê as informações relevantes do cabeçalho arquivo de índice*/
+    fseek(arquivoIndice, 0, SEEK_SET);
+    fread(&cabecalhoIndice.status, sizeof(char), 1, arquivoIndice);
+    if(cabecalhoIndice.status == '0')
+    {
+        printf("Falha no processamento do arquivo.\n");
+        fclose(arquivoIndice); fclose(arquivoOriginal);
+        return;
+    }
+    fseek(arquivoIndice, 1, SEEK_SET);
+    fread(&cabecalhoIndice.noRaiz, sizeof(int), 1, arquivoIndice);
+    fseek(arquivoIndice, 13, SEEK_SET);
+    fread(&cabecalhoIndice.nroChaves, sizeof(int), 1, arquivoIndice);
+
+    /* Recebe o número de registros inserido no arquivo original */
+    fseek(arquivoOriginal, 5, SEEK_SET);
+    fread(&numregistros, sizeof(int), 1, arquivoOriginal);
+
+    /* Se o número de registros entre ambos arquivos, significa que o arquivo de índice está errado ou desatualizado.*/
+    if(cabecalhoIndice.nroChaves != numregistros)
+    {
+        printf("Falha no processamento do arquivo.\n");
+        fclose(arquivoIndice); fclose(arquivoOriginal);
+        return;
+    }
+        
+    /* Chama a função de busca e trata as saídas */
+    if(buscaArquivoIndice(arquivoIndice, cabecalhoIndice.noRaiz, idNascimento, &rrnAchado, &numIteracoes) <= 0)
+        printf("Registro inexistente.\n");
+    else
+    {
+        if(buscaRRN(nomeArquivoOriginal, rrnAchado) == 1)
+            printf("Quantidade de paginas da arvore-B acessadas: %d\n", numIteracoes);
+    }
+    
+    fclose(arquivoIndice);
+}
+
 int main(int argc, char* argv[])
 {
     // Variável que Armazena o comando correspondente a uma das funcionalidades suportadas pelo programa.
@@ -1118,9 +1364,10 @@ int main(int argc, char* argv[])
     cabecalho.numRegistrosRemovidos   = 0;
     cabecalho.numRegistrosAtualizados = 0;
 
-    // As duas proximas strings armazenam os nomes dos arquivos que podem ser abertos.
+    // As três proximas strings armazenam os nomes dos arquivos que podem ser abertos.
     char nomeArquivoCSV[67];
     char nomeArquivoBinario[67];
+    char nomeArquivoIndice[67];
     
     scanf("%d", &comando);
 
@@ -1158,13 +1405,28 @@ int main(int argc, char* argv[])
 
         case 6:
             scanf("%s", nomeArquivoBinario);
-            insercaoAdicional(nomeArquivoBinario);
+            insercaoAdicional(nomeArquivoBinario, 0);
             break;
         case 7:
             scanf("%s", nomeArquivoBinario);
             registroAtualizar(nomeArquivoBinario);
             break;
+        case 8:
+            scanf("%s", nomeArquivoBinario);
+            scanf("%s", nomeArquivoIndice);
+            criaArquivoIndice(nomeArquivoBinario, nomeArquivoIndice);
+        case 9:
+            scanf("%s", nomeArquivoBinario);
+            scanf("%s", nomeArquivoIndice);
+            // Pula a string "idNascimento":
+            scanf("%s", nomeArquivoCSV);
             
+            buscaIndice(nomeArquivoBinario, nomeArquivoIndice);
+            break;
+        case 10:
+            /* Para esta funcionalidade, não foi criada uma nova função, mas alterada a função da funcionalidade 6.*/
+            scanf("%s", nomeArquivoBinario);
+            insercaoAdicional(nomeArquivoBinario, 1);
     }
     return 0;
 }
